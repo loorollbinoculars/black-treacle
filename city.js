@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 
-export function addCity(scene, gridSize = 20, buildingBlockSize=1, buildingMaxHeight=5){
+export function addCity(scene, gridSize = 10, buildingBlockSize=2, buildingMaxHeight=7){
     let grid = []
     let gridElement = []
     for(let i=0; i<gridSize; i++){
@@ -35,7 +35,6 @@ export function addCity(scene, gridSize = 20, buildingBlockSize=1, buildingMaxHe
     }
     console.log(newGrid)
 
-    const material = new THREE.MeshBasicMaterial( { color: 0x100010 } );
     let x = -Math.floor(gridSize/2)
     let z = -Math.floor(gridSize/2)
     for (let row of newGrid){
@@ -43,6 +42,7 @@ export function addCity(scene, gridSize = 20, buildingBlockSize=1, buildingMaxHe
             if (height == 0){
                 
             }else{
+                const material = new THREE.MeshLambertMaterial( { color: '#'+(Math.random()*0xffffff).toString(16).substr(0,6) } );
                 let building = new THREE.Mesh(new THREE.BoxGeometry(1,height,1), material)
                 building.position.set(x+1, height/2, z+1)
                 // console.log(`Add building at (0,0,0) of height ${height}`)
