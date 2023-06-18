@@ -108,18 +108,29 @@ controller2.addEventListener('selectstart', (e)=>{
 		direction, 0.01, 10)
 
 	// let arrow = new THREE.ArrowHelper(raycast.ray.direction, raycast.ray.origin, 100, Math.random() * 0xffffff );
+	
 	const intersections = raycast.intersectObjects(scene.children)
-	console.log('intersections:')
-	console.log(intersections)
 	for (let intersection of intersections){
 		if (intersection.object.type == "Mesh"){
-			console.log('The below is a mesh')
-			console.log(intersection)
-			dolly.position.x =intersection.object.position.x
-			dolly.position.z = intersection.object.position.z
-			dolly.position.y=intersection.object.geometry.parameters['height']
-			console.log('dolly:')
-			console.log(dolly)
+			const points = [];
+			points.push(new THREE.Vector3(
+				intersection.point.x,
+				intersection.point.y,
+				intersection.point.z,
+			))
+			points.push(new THREE.Vector3(
+				controller2.position.x + controller2['parent'].position.x,
+				controller2.position.y + controller2['parent'].position.y,
+				controller2.position.z + controller2['parent'].position.z)
+				)
+			const web = new THREE.BufferGeometry().setFromPoints(points);
+			const webLine = new THREE.Line(web,new THREE.LineBasicMaterial({color: 0x0000ff}))
+			scene.add(webLine)
+			// dolly.position.x =intersection.object.position.x
+			// dolly.position.z = intersection.object.position.z
+			// dolly.position.y=intersection.object.geometry.parameters['height']
+			console.log('Controller')
+			console.log(renderer.xr.getSession().inputSources[1])
 			break
 		}
 	}
