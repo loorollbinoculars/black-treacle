@@ -4,16 +4,17 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {addCity} from './city.js'
 import {VRButton} from './node_modules/three/examples/jsm/webxr/VRButton.js'
 import {addControllers} from './controllers.js'
+import { updateControllers } from './updateControllers.js';
 
 let gridSize=25
 let buildingMaxHeight= 20
 let buildingBlockSize = 3
+let controllers = []
 
 /*
  TODO: Add controller interfacing:
-	- Create controller status check on every frame
-	- Create a previous controller object (or data storage or something)
-	- Each frame, compare both objects and analyse changes, events, etc.
+	- Controllers seem to not move with dolly
+	- Make them move ith dolly.
 */
 
 
@@ -21,7 +22,7 @@ let buildingBlockSize = 3
 
 let scene = new THREE.Scene();
 scene = addLights(scene)
-let camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+let camera = new THREE.PerspectiveCamera( 105, window.innerWidth / window.innerHeight, 0.1, 1000 );
 camera.position.set(-gridSize,buildingMaxHeight,10)
 
 let renderer = new THREE.WebGLRenderer();
@@ -31,6 +32,12 @@ document.body.appendChild( renderer.domElement );
 document.body.appendChild( VRButton.createButton( renderer ) );
 renderer.xr.enabled = true;
 const controls = new OrbitControls( camera, renderer.domElement );
+let dolly = new THREE.Object3D();
+dolly.name = "dolly"
+dolly.add(camera);
+let dummyCam = new THREE.Object3D();
+camera.add(dummyCam)
+scene.add(dolly);
 
 
 window.addEventListener("keypress", (event) => {
@@ -63,15 +70,73 @@ function onWindowResize(){
 
 
 
-let out = addControllers(scene, renderer, camera)
+let out = addControllers(scene, renderer, camera, dolly)
 scene = out[0]
 renderer = out[1]
 camera = out[2]
-
+let rotationCounter = 0
 renderer.setAnimationLoop( function () {
-
+	
+	controllers = updateControllers(renderer, controllers)
+	if (controllers){
+		const quaternion = camera.quaternion.normalize();
+		const direction = new THREE.Vector3(0, 0, -1);
+		direction.applyQuaternion(quaternion);
+		if(controllers[0]['axes'][3]){
+			let xrCamera = renderer.xr.getCamera();
+			const yPosition = dolly.position.y
+			const origQuaternion = dolly.quaternion.clone();
+			const quaternionCamera = xrCamera.quaternion.clone()
+			dolly.quaternion.copy(quaternionCamera)
+			dolly.translateZ(0.1 * controllers[0]['axes'][3])
+			dolly.position.y= yPosition
+			dolly.quaternion.copy(origQuaternion)
+			// console.log(`${xrCamera.rotation._x.toPrecision(2)}`, `${xrCamera.rotation._y.toPrecision(2)}`, `${xrCamera.rotation._z.toPrecision(2)}`)
+		}
+		// if(controllers[0]['axes'][3]){
+		// 	let xrCamera = renderer.xr.getCamera();
+		// 	const yPosition = dolly.position.y
+		// 	const origQuaternion = dolly.quaternion.clone();
+		// 	const quaternionCamera = xrCamera.quaternion.clone()
+		// 	dolly.quaternion.copy(quaternionCamera)
+		// 	dolly.translateZ(0.1)
+		// 	dolly.position.y= yPosition
+		// 	dolly.quaternion.copy(origQuaternion)
+		// }
+		// if(controllers[0]['axes'][2]){
+		// 	let xrCamera = renderer.xr.getCamera();
+		// 	const yPosition = dolly.position.y
+		// 	const origQuaternion = dolly.quaternion.clone();
+		// 	const quaternionCamera = xrCamera.quaternion.clone()
+		// 	dolly.quaternion.copy(quaternionCamera)
+		// 	dolly.translateX(0.1 * controllers[0]['axes'][2])
+		// 	dolly.position.y= yPosition
+		// 	dolly.quaternion.copy(origQuaternion)
+		// }
+		if(controllers[0]['axes'][2]){
+			let xrCamera = renderer.xr.getCamera();
+			const yPosition = dolly.position.y
+			const origQuaternion = dolly.quaternion.clone();
+			const quaternionCamera = xrCamera.quaternion.clone()
+			dolly.quaternion.copy(quaternionCamera)
+			dolly.translateX(0.1 * controllers[0]['axes'][2])
+			dolly.position.y= yPosition
+			dolly.quaternion.copy(origQuaternion)
+		}
+		if (rotationCounter < 24){
+			rotationCounter++
+		}
+		if (controllers[1]['axes'][2]){
+			dolly.rotateY(-0.0314 * controllers[1]['axes'][2])
+			rotationCounter = 0
+		}
+		// if (controllers[1]['axes'][2] < -0.8){
+		// 	dolly.rotateY(0.0314 * controllers[1]['axes'][2])
+		// 	rotationCounter = 0
+		// }
+	}
+	
 	renderer.render( scene, camera );
-
 } );
 // function animate() {
 // 	requestAnimationFrame( animate )

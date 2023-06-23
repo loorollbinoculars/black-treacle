@@ -2,15 +2,12 @@ import * as THREE from "three";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
 
-export function addControllers(scene, renderer, camera) {
+export function addControllers(scene, renderer, camera, dolly) {
 	let hand1, hand2;
 	let controller1, controller2;
 	let controllerGrip1, controllerGrip2;
 	controller1 = renderer.xr.getController(0);
 	controller2 = renderer.xr.getController(1);
-	let dolly = new THREE.Object3D();
-	dolly.add(camera);
-	scene.add(dolly);
 
 	const controllerModelFactory = new XRControllerModelFactory();
 	const handModelFactory = new XRHandModelFactory();
@@ -88,8 +85,8 @@ export function addControllers(scene, renderer, camera) {
 				controller2.position.z + controller2["parent"].position.z
 			),
 			direction,
-			0.01,
-			10
+			0.5,
+			100
 		);
 
 		// let arrow = new THREE.ArrowHelper(raycast.ray.direction, raycast.ray.origin, 100, Math.random() * 0xffffff );
@@ -121,9 +118,12 @@ export function addControllers(scene, renderer, camera) {
 					new THREE.LineBasicMaterial({ color: 0x0000ff })
 				);
 				scene.add(webLine);
-				// dolly.position.x =intersection.object.position.x
-				// dolly.position.z = intersection.object.position.z
-				// dolly.position.y=intersection.object.geometry.parameters['height']
+				try {
+					dolly.position.y =
+						intersection.object.geometry.parameters["height"];
+					dolly.position.x = intersection.object.position.x;
+					dolly.position.z = intersection.object.position.z;
+				} catch (err) {}
 				console.log("Controller 0");
 				console.log(renderer.xr.getSession().inputSources[0]);
 				console.log(renderer.xr.getController(0));
