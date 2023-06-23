@@ -17,9 +17,11 @@ export function addControllers(scene, renderer, camera, dolly) {
 	controllerGrip1.add(
 		controllerModelFactory.createControllerModel(controllerGrip1)
 	);
+	controllerGrip1.name = "controllerGrip1"
 	dolly.add(controllerGrip1);
 	hand1 = renderer.xr.getHand(0);
 	hand1.add(handModelFactory.createHandModel(hand1));
+	hand1.name = "hand1"
 	dolly.add(hand1);
 
 	// Hand 2
@@ -27,10 +29,12 @@ export function addControllers(scene, renderer, camera, dolly) {
 	controllerGrip2.add(
 		controllerModelFactory.createControllerModel(controllerGrip2)
 	);
+	controllerGrip2.name = "controllerGrip2"
 	dolly.add(controllerGrip2);
 
 	hand2 = renderer.xr.getHand(1);
 	hand2.add(handModelFactory.createHandModel(hand2));
+	hand2.name = "hand2"
 	dolly.add(hand2);
 
 	//
@@ -49,6 +53,7 @@ export function addControllers(scene, renderer, camera, dolly) {
 	// controllers
 
 	dolly.add(controller1);
+	dolly.add(controller2)
 
 	// Add cube on controller:
 	controller1.addEventListener("selectstart", (e) => {
@@ -58,31 +63,35 @@ export function addControllers(scene, renderer, camera, dolly) {
 		let cuboid = new THREE.BoxGeometry(0.05, 0.05, 0.05);
 		const cuboidMaterial = new THREE.MeshBasicMaterial({ color: 0x404040 });
 		let _cuboid = new THREE.Mesh(cuboid, cuboidMaterial);
+
+		let xrCamera = renderer.xr.getCamera();
+		let localPosition = controller1.position;
+		localPosition.applyQuaternion(xrCamera.quaternion.clone())
 		_cuboid.position.x =
-			controller1.position.x + controller1["parent"].position.x;
+			controller1["parent"].position.x + localPosition.x;
 		_cuboid.position.y =
-			controller1.position.y + controller1["parent"].position.y;
+			controller1["parent"].position.y + localPosition.y;
 		_cuboid.position.z =
-			controller1.position.z + controller1["parent"].position.z;
+			controller1["parent"].position.z + localPosition.z;
 
 		_cuboid.rotation.set(...controller1.rotation);
 
 		scene.add(_cuboid);
 	});
 
-	controller2 = renderer.xr.getController(1);
-	dolly.add(controller2);
 	controller2.addEventListener("selectstart", (e) => {
 		console.log("Pressing Down on right controller");
 		const quaternion = controller2.quaternion.normalize();
 		const direction = new THREE.Vector3(0, 0, -1);
 		direction.applyQuaternion(quaternion);
-
+		let xrCamera = renderer.xr.getCamera();
+		let localPosition = controller2.position;
+		localPosition.applyQuaternion(xrCamera.quaternion.clone())
 		let raycast = new THREE.Raycaster(
 			new THREE.Vector3(
-				controller2.position.x + controller2["parent"].position.x,
-				controller2.position.y + controller2["parent"].position.y,
-				controller2.position.z + controller2["parent"].position.z
+				controller2["parent"].position.x + localPosition.x,
+				controller2["parent"].position.y + localPosition.y,
+				controller2["parent"].position.z + localPosition.z
 			),
 			direction,
 			0.5,
@@ -143,5 +152,5 @@ export function addControllers(scene, renderer, camera, dolly) {
 		}
 	});
 
-	return [scene, renderer, camera];
+	return [scene, renderer, camera, dolly];
 }

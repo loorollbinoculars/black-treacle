@@ -14,7 +14,7 @@ let controllers = []
 /*
  TODO: Add controller interfacing:
 	- Controllers seem to not move with dolly
-	- Make them move ith dolly.
+	- Make them move with dolly.
 */
 
 
@@ -74,7 +74,7 @@ let out = addControllers(scene, renderer, camera, dolly)
 scene = out[0]
 renderer = out[1]
 camera = out[2]
-let rotationCounter = 0
+dolly = out[3]
 renderer.setAnimationLoop( function () {
 	
 	controllers = updateControllers(renderer, controllers)
@@ -88,52 +88,29 @@ renderer.setAnimationLoop( function () {
 			const origQuaternion = dolly.quaternion.clone();
 			const quaternionCamera = xrCamera.quaternion.clone()
 			dolly.quaternion.copy(quaternionCamera)
-			dolly.translateZ(0.1 * controllers[0]['axes'][3])
+			dolly.translateZ(0.08 * controllers[0]['axes'][3])
 			dolly.position.y= yPosition
 			dolly.quaternion.copy(origQuaternion)
-			// console.log(`${xrCamera.rotation._x.toPrecision(2)}`, `${xrCamera.rotation._y.toPrecision(2)}`, `${xrCamera.rotation._z.toPrecision(2)}`)
 		}
-		// if(controllers[0]['axes'][3]){
-		// 	let xrCamera = renderer.xr.getCamera();
-		// 	const yPosition = dolly.position.y
-		// 	const origQuaternion = dolly.quaternion.clone();
-		// 	const quaternionCamera = xrCamera.quaternion.clone()
-		// 	dolly.quaternion.copy(quaternionCamera)
-		// 	dolly.translateZ(0.1)
-		// 	dolly.position.y= yPosition
-		// 	dolly.quaternion.copy(origQuaternion)
-		// }
-		// if(controllers[0]['axes'][2]){
-		// 	let xrCamera = renderer.xr.getCamera();
-		// 	const yPosition = dolly.position.y
-		// 	const origQuaternion = dolly.quaternion.clone();
-		// 	const quaternionCamera = xrCamera.quaternion.clone()
-		// 	dolly.quaternion.copy(quaternionCamera)
-		// 	dolly.translateX(0.1 * controllers[0]['axes'][2])
-		// 	dolly.position.y= yPosition
-		// 	dolly.quaternion.copy(origQuaternion)
-		// }
+
 		if(controllers[0]['axes'][2]){
 			let xrCamera = renderer.xr.getCamera();
 			const yPosition = dolly.position.y
 			const origQuaternion = dolly.quaternion.clone();
 			const quaternionCamera = xrCamera.quaternion.clone()
 			dolly.quaternion.copy(quaternionCamera)
-			dolly.translateX(0.1 * controllers[0]['axes'][2])
+			dolly.translateX(0.08 * controllers[0]['axes'][2])
 			dolly.position.y= yPosition
 			dolly.quaternion.copy(origQuaternion)
 		}
-		if (rotationCounter < 24){
-			rotationCounter++
-		}
+
 		if (controllers[1]['axes'][2]){
-			dolly.rotateY(-0.0314 * controllers[1]['axes'][2])
-			rotationCounter = 0
+			// dolly.rotateZ(-0.0314 * controllers[1]['axes'][2])
+			console.log(dolly)
+			console.log(scene)
+			dolly.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -0.0314 * controllers[1]['axes'][2])
 		}
-		// if (controllers[1]['axes'][2] < -0.8){
-		// 	dolly.rotateY(0.0314 * controllers[1]['axes'][2])
-		// 	rotationCounter = 0
-		// }
+
 	}
 	
 	renderer.render( scene, camera );
