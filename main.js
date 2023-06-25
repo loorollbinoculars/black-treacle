@@ -3,20 +3,13 @@ import {addLights} from './lights.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {addCity} from './city.js'
 import {VRButton} from './node_modules/three/examples/jsm/webxr/VRButton.js'
-import {addControllers} from './controllers.js'
+import { addControllers, controllerSticksAndButtons} from './controllers.js'
 import { updateControllers } from './updateControllers.js';
 
-let gridSize=25
+let gridSize=30
 let buildingMaxHeight= 20
 let buildingBlockSize = 3
 let controllers = []
-
-/*
- TODO: Add controller interfacing:
-	- Controllers seem to not move with dolly
-	- Make them move with dolly.
-*/
-
 
 // TODO: GOOD IDEA TO ADD HAMSTER TUBES TO THE WHOLE EXPERIENCE FOR SUPER FAST TRAVERSAL
 
@@ -38,7 +31,6 @@ dolly.add(camera);
 let dummyCam = new THREE.Object3D();
 camera.add(dummyCam)
 scene.add(dolly);
-
 
 window.addEventListener("keypress", (event) => {
 	switch(event.key){
@@ -67,58 +59,10 @@ function onWindowResize(){
 
 }
 
-
-
-
-let out = addControllers(scene, renderer, camera, dolly)
-scene = out[0]
-renderer = out[1]
-camera = out[2]
-dolly = out[3]
+[scene, renderer, camera, dolly] = addControllers(scene, renderer, camera, dolly)
 renderer.setAnimationLoop( function () {
 	
-	controllers = updateControllers(renderer, controllers)
-	if (controllers){
-		const quaternion = camera.quaternion.normalize();
-		const direction = new THREE.Vector3(0, 0, -1);
-		direction.applyQuaternion(quaternion);
-		if(controllers[0]['axes'][3]){
-			let xrCamera = renderer.xr.getCamera();
-			const yPosition = dolly.position.y
-			const origQuaternion = dolly.quaternion.clone();
-			const quaternionCamera = xrCamera.quaternion.clone()
-			dolly.quaternion.copy(quaternionCamera)
-			dolly.translateZ(0.08 * controllers[0]['axes'][3])
-			dolly.position.y= yPosition
-			dolly.quaternion.copy(origQuaternion)
-		}
-
-		if(controllers[0]['axes'][2]){
-			let xrCamera = renderer.xr.getCamera();
-			const yPosition = dolly.position.y
-			const origQuaternion = dolly.quaternion.clone();
-			const quaternionCamera = xrCamera.quaternion.clone()
-			dolly.quaternion.copy(quaternionCamera)
-			dolly.translateX(0.08 * controllers[0]['axes'][2])
-			dolly.position.y= yPosition
-			dolly.quaternion.copy(origQuaternion)
-		}
-
-		if (controllers[1]['axes'][2]){
-			// dolly.rotateZ(-0.0314 * controllers[1]['axes'][2])
-			console.log(dolly)
-			console.log(scene)
-			dolly.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -0.0314 * controllers[1]['axes'][2])
-		}
-
-	}
-	
+	controllerSticksAndButtons(renderer,controllers,camera,dolly)
+	controls.update();
 	renderer.render( scene, camera );
 } );
-// function animate() {
-// 	requestAnimationFrame( animate )
-
-// 	renderer.render( scene, camera );
-// }
-
-// animate();

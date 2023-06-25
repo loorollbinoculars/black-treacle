@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { XRControllerModelFactory } from "three/addons/webxr/XRControllerModelFactory.js";
 import { XRHandModelFactory } from "three/addons/webxr/XRHandModelFactory.js";
+import { updateControllers } from './updateControllers.js';
 
 export function addControllers(scene, renderer, camera, dolly) {
+	
 	let hand1, hand2;
 	let controller1, controller2;
 	let controllerGrip1, controllerGrip2;
@@ -58,48 +60,25 @@ export function addControllers(scene, renderer, camera, dolly) {
 	// Add cube on controller:
 	controller1.addEventListener("selectstart", (e) => {
 		console.log("Pressing Down on left trigger!");
-		console.log(controller1);
-		// add cube on controller
 		let cuboid = new THREE.BoxGeometry(0.05, 0.05, 0.05);
 		const cuboidMaterial = new THREE.MeshBasicMaterial({ color: 0x404040 });
 		let _cuboid = new THREE.Mesh(cuboid, cuboidMaterial);
-
-		let xrCamera = renderer.xr.getCamera();
-		let localPosition = controller1.position;
-		localPosition.applyQuaternion(xrCamera.quaternion.clone())
-		_cuboid.position.x =
-			controller1["parent"].position.x + localPosition.x;
-		_cuboid.position.y =
-			controller1["parent"].position.y + localPosition.y;
-		_cuboid.position.z =
-			controller1["parent"].position.z + localPosition.z;
-
-		_cuboid.rotation.set(...controller1.rotation);
-
+		_cuboid.position.set(...controller1.getWorldPosition(new THREE.Vector3))
+		_cuboid.quaternion.set(...controller1.getWorldQuaternion(new THREE.Quaternion));
 		scene.add(_cuboid);
 	});
 
 	controller2.addEventListener("selectstart", (e) => {
 		console.log("Pressing Down on right controller");
-		const quaternion = controller2.quaternion.normalize();
+		const quaternion = controller2.getWorldQuaternion(new THREE.Quaternion).normalize();
 		const direction = new THREE.Vector3(0, 0, -1);
 		direction.applyQuaternion(quaternion);
-		let xrCamera = renderer.xr.getCamera();
-		let localPosition = controller2.position;
-		localPosition.applyQuaternion(xrCamera.quaternion.clone())
 		let raycast = new THREE.Raycaster(
-			new THREE.Vector3(
-				controller2["parent"].position.x + localPosition.x,
-				controller2["parent"].position.y + localPosition.y,
-				controller2["parent"].position.z + localPosition.z
-			),
+			controller2.getWorldPosition(new THREE.Vector3),
 			direction,
-			0.5,
+			0.4,
 			100
 		);
-
-		// let arrow = new THREE.ArrowHelper(raycast.ray.direction, raycast.ray.origin, 100, Math.random() * 0xffffff );
-
 		const intersections = raycast.intersectObjects(scene.children);
 		for (let intersection of intersections) {
 			if (intersection.object.type == "Mesh") {
@@ -112,14 +91,7 @@ export function addControllers(scene, renderer, camera, dolly) {
 					)
 				);
 				points.push(
-					new THREE.Vector3(
-						controller2.position.x +
-							controller2["parent"].position.x,
-						controller2.position.y +
-							controller2["parent"].position.y,
-						controller2.position.z +
-							controller2["parent"].position.z
-					)
+					controller2.getWorldPosition(new THREE.Vector3)
 				);
 				const web = new THREE.BufferGeometry().setFromPoints(points);
 				const webLine = new THREE.Line(
@@ -153,4 +125,46 @@ export function addControllers(scene, renderer, camera, dolly) {
 	});
 
 	return [scene, renderer, camera, dolly];
+}
+
+
+
+export function controllerSticksAndButtons(renderer,controllers,camera,dolly){
+	let session = renderer.xr.getSession()
+	if (!session){
+		return 
+	}
+	controllers = updateControllers(renderer, controllers)
+	if (controllers){
+		const quaternion = camera.quaternion.normalize();
+		const direction = new THREE.Vector3(0, 0, -1);
+		direction.applyQuaternion(quaternion);
+		if(controllers[0]['axes'][3]){
+			let xrCamera = renderer.xr.getCamera();
+			const yPosition = dolly.position.y
+			const origQuaternion = dolly.quaternion.clone();
+			const quaternionCamera = xrCamera.quaternion.clone()
+			dolly.quaternion.copy(quaternionCamera)
+			dolly.translateZ(0.08 * controllers[0]['axes'][3])
+			dolly.position.y= yPosition
+			dolly.quaternion.copy(origQuaternion)
+		}
+
+		if(controllers[0]['axes'][2]){
+			let xrCamera = renderer.xr.getCamera();
+			const yPosition = dolly.position.y
+			const origQuaternion = dolly.quaternion.clone();
+			const quaternionCamera = xrCamera.quaternion.clone()
+			dolly.quaternion.copy(quaternionCamera)
+			dolly.translateX(0.08 * controllers[0]['axes'][2])
+			dolly.position.y= yPosition
+			dolly.quaternion.copy(origQuaternion)
+		}
+
+		if (controllers[1]['axes'][2]){
+			// dolly.rotateZ(-0.0314 * controllers[1]['axes'][2])
+			dolly.rotateOnWorldAxis(new THREE.Vector3(0,1,0), -0.0314 * controllers[1]['axes'][2])
+		}
+
+	}
 }

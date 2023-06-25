@@ -14,7 +14,7 @@
   "dependencies": {
     "browserify": "^17.0.0",
     "reload": "^3.2.1",
-    "three": "^0.150.0",
+    "three": "^0.150.1",
     "vite-plugin-mkcert": "^1.15.0"
   }
 }
